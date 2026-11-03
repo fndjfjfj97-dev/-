@@ -1,0 +1,37 @@
+{% extends 'layout.html' %}
+{% block title %}Смотреть эфир — Канал Бурмалды{% endblock %}
+{% block head %}
+<style>
+  body { background: #050505; } .nav { position: relative; z-index: 2; }
+  .watch { max-width: 1280px; padding: 36px 24px 52px; margin: auto; }
+  .stream-frame { position: relative; overflow: hidden; background: #080808; border: 1px solid #333; aspect-ratio: 16/9; border-radius: 9px; box-shadow: 0 18px 55px #000; }
+  .logo-screen, video { position: absolute; inset: 0; width: 100%; height: 100%; } .logo-screen { background: #090909; display: grid; place-items: center; }
+  .logo-screen img { width: 100%; height: 100%; object-fit: cover; opacity: .82; transform: scale(1.02); } .logo-screen::after { content: ''; position: absolute; inset: 0; background: linear-gradient(0deg, rgba(0,0,0,.82), transparent 65%); }
+  video { background: #000; object-fit: contain; display: none; }
+  .overlay { position: absolute; z-index: 1; inset: 0; display: flex; align-items: flex-end; padding: clamp(20px, 4vw, 56px); background: linear-gradient(0deg, rgba(0,0,0,.7), transparent 55%); }
+  .label { color: var(--orange); font-size: .68rem; font-weight: 900; letter-spacing: .16em; margin-bottom: 12px; text-transform: uppercase; } h1 { font-size: clamp(1.2rem, 3vw, 2.5rem); margin: 0; font-weight: 900; text-transform: uppercase; max-width: 850px; }
+  .countdown { margin-top: 15px; font-size: clamp(1.7rem, 5vw, 4.5rem); letter-spacing: .03em; color: #fff; font-weight: 900; font-variant-numeric: tabular-nums; text-shadow: 0 2px 15px #000; } .sub { margin: 12px 0 0; color: #ddd; font-size: .83rem; font-weight: 700; }
+  .live-mark { display: inline-flex; align-items: center; gap: 7px; background: #d71919; color: #fff; padding: 8px 11px; font-size: .7rem; letter-spacing: .1em; font-weight: 900; border-radius: 3px; margin-bottom: 13px; } .live-mark::before { content: ''; width: 7px; height: 7px; background: white; border-radius: 50%; animation: pulse 1.3s infinite; } @keyframes pulse { 50% { opacity: .35; transform: scale(.7); } }
+  #play { display: none; margin-top: 16px; } .empty { position: absolute; z-index: 2; inset: 0; display: none; place-items: center; text-align: center; padding: 30px; background: rgba(0,0,0,.66); } .empty h2 { font-size: clamp(1.2rem, 3vw, 2rem); text-transform: uppercase; margin: 0 0 11px; } .empty p { color: #bbb; font-size: .85rem; margin: 0; }
+  .under { display: flex; justify-content: space-between; gap: 20px; align-items: flex-start; padding: 25px 4px; } .under p { margin: 7px 0; color: #a9a9a9; font-size: .82rem; } .waiting { color: #ff9d00; font-size: .7rem; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; }
+  @media (max-width: 600px) { .watch { padding: 20px 12px 30px; } .stream-frame { border-radius: 3px; } .under { display:block; padding:18px 4px; } }
+</style>
+{% endblock %}
+{% block content %}
+<nav class="nav"><a class="brand" href="/watch"><i class="brand-dot"></i>Канал Бурмалды</a><span class="tag">Прямой эфир</span></nav>
+<main class="watch"><div class="stream-frame" id="frame">
+  <div class="logo-screen" id="logo"><img src="{{ url_for('static', filename='burmaldy-logo.jpg') }}" alt="Канал Бурмалды"></div>
+  <video id="video" controls playsinline></video>
+  <div class="overlay" id="overlay"><div><div class="label" id="label">ГОТОВИМСЯ К ЭФИРУ</div><h1 id="title">Скоро увидимся</h1><div class="countdown" id="countdown">--:--:--</div><p class="sub" id="sub">Проверяем расписание…</p><button class="button" id="play">Включить эфир</button></div></div>
+  <div class="empty" id="empty"><div><h2>Скоро будет эфир</h2><p>Создатель ещё не назначил дату трансляции.<br>Загляните сюда немного позже.</p></div></div>
+</div><div class="under"><div><div class="waiting" id="state">ОЖИДАНИЕ</div><p>Заставка и отсчёт обновляются автоматически.</p></div><p id="date-text"></p></div></main>
+<script>
+  const elements = { logo: document.getElementById('logo'), video: document.getElementById('video'), overlay: document.getElementById('overlay'), title: document.getElementById('title'), label: document.getElementById('label'), countdown: document.getElementById('countdown'), sub: document.getElementById('sub'), state: document.getElementById('state'), date: document.getElementById('date-text'), empty: document.getElementById('empty'), play: document.getElementById('play') };
+  let broadcast = null, timer = null, started = false;
+  function setVideo(src) { if (elements.video.dataset.src !== src) { elements.video.src = src; elements.video.dataset.src = src; } }
+  function begin() { if (!broadcast || started) return; started = true; elements.logo.style.display = 'none'; elements.video.style.display = 'block'; elements.overlay.style.alignItems = 'flex-start'; elements.overlay.style.padding = '18px'; elements.label.innerHTML = '<span class="live-mark">В ЭФИРЕ</span>'; elements.title.textContent = broadcast.title; elements.countdown.style.display = 'none'; elements.sub.style.display = 'none'; elements.state.textContent = '● В ЭФИРЕ'; elements.state.style.color = '#ff5c3f'; setVideo(broadcast.videoUrl); elements.video.play().catch(() => { elements.play.style.display = 'inline-flex'; }); }
+  function update() { if (!broadcast) return; const remaining = broadcast.startUnix - Date.now(); if (remaining <= 0) { begin(); return; } started = false; elements.logo.style.display = 'grid'; elements.video.style.display = 'none'; elements.overlay.style.alignItems = 'flex-end'; elements.overlay.style.padding = ''; elements.label.textContent = 'ГОТОВИМСЯ К ЭФИРУ'; elements.countdown.style.display = ''; elements.sub.style.display = ''; elements.state.textContent = 'ОЖИДАНИЕ'; elements.state.style.color = ''; elements.play.style.display = 'none'; const t = Math.floor(remaining / 1000), h = Math.floor(t / 3600), m = Math.floor(t % 3600 / 60), s = t % 60; elements.countdown.textContent = [h,m,s].map(x => String(x).padStart(2,'0')).join(':'); }
+  async function load() { try { const data = await fetch('/api/broadcast', {cache:'no-store'}).then(r => r.json()); broadcast = data.broadcast; if (!broadcast) { elements.empty.style.display = 'grid'; elements.overlay.style.display = 'none'; elements.logo.style.filter = 'grayscale(.6) brightness(.55)'; return; } elements.empty.style.display = 'none'; elements.overlay.style.display = 'flex'; elements.logo.style.filter = ''; elements.title.textContent = broadcast.title; elements.sub.textContent = 'До начала трансляции'; elements.date.textContent = 'Старт: ' + new Date(broadcast.startUnix).toLocaleString('ru-RU', {dateStyle:'long', timeStyle:'short'}); update(); } catch (e) { elements.sub.textContent = 'Нет связи с сервером. Пытаемся подключиться…'; } }
+  elements.play.addEventListener('click', () => { elements.video.play(); elements.play.style.display = 'none'; }); load(); timer = setInterval(update, 250); setInterval(load, 15000);
+</script>
+{% endblock %}

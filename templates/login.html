@@ -1,0 +1,14 @@
+{% extends 'layout.html' %}
+{% block title %}Вход в студию — Канал Бурмалды{% endblock %}
+{% block head %}
+<style>
+  .login { min-height: calc(100vh - 76px); display: grid; place-items: center; padding: 28px; }
+  .box { width: min(100%, 430px); padding: 34px; border: 1px solid #343434; border-radius: 10px; background: linear-gradient(145deg, #1c1c1c, #101010); }
+  .box img { width: 100%; border-radius: 6px; margin-bottom: 26px; } .box h1 { font-size: 1.45rem; margin: 0 0 9px; text-transform: uppercase; } .box p { color: #aaa; font-size: .8rem; line-height: 1.55; margin: 0 0 22px; }
+  label { font-size: .7rem; letter-spacing: .08em; font-weight: 800; text-transform: uppercase; color: #c7c7c7; display: block; margin-bottom: 8px; } input { display:block; width:100%; border:1px solid #3b3b3b; background:#0c0c0c; color:#fff; border-radius:5px; padding:14px; font:600 .88rem Montserrat,sans-serif; margin-bottom:17px; } .button { width: 100%; }
+</style>
+{% endblock %}
+{% block content %}
+<nav class="nav"><a class="brand" href="/watch"><i class="brand-dot"></i>Канал Бурмалды</a><a class="tag" href="/watch">К эфиру</a></nav>
+<main class="login"><section class="box"><img src="{{ url_for('static', filename='burmaldy-logo.jpg') }}" alt="Канал Бурмалды"><h1>Студия автора</h1><p>Введите свой пароль, чтобы управлять трансляцией.</p>{% if error %}<div class="notice error">{{ error }}</div>{% endif %}<form method="post"><label for="password">Пароль</label><input id="password" name="password" type="password" autocomplete="current-password" autofocus required><button class="button" type="submit">Войти</button></form></section></main>
+{% endblock %}

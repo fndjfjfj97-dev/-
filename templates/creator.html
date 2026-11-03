@@ -1,0 +1,55 @@
+{% extends 'layout.html' %}
+{% block title %}Студия — Канал Бурмалды{% endblock %}
+{% block head %}
+<style>
+  .studio { max-width: 1180px; margin: 0 auto; padding: clamp(28px, 5vw, 68px) 24px; }
+  .eyebrow { color: var(--orange); font-size: .7rem; letter-spacing: .18em; font-weight: 900; text-transform: uppercase; }
+  h1 { font-size: clamp(2rem, 5vw, 4.7rem); line-height: .96; margin: 13px 0 18px; font-weight: 900; letter-spacing: -.055em; text-transform: uppercase; }
+  h1 span { color: var(--orange); } .lead { color: var(--muted); max-width: 620px; line-height: 1.6; font-size: .95rem; }
+  .grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(260px, .65fr); gap: 24px; margin-top: 40px; align-items: start; }
+  .card { background: linear-gradient(145deg, #1d1d1d, #101010); border: 1px solid #303030; border-radius: 10px; padding: clamp(22px, 4vw, 38px); }
+  .card h2 { margin: 0 0 26px; font-size: 1.05rem; text-transform: uppercase; letter-spacing: .03em; }
+  label { display: block; font-size: .7rem; letter-spacing: .08em; font-weight: 800; text-transform: uppercase; color: #c7c7c7; margin: 20px 0 8px; }
+  input { display: block; width: 100%; border: 1px solid #3b3b3b; border-radius: 5px; background: #0c0c0c; color: white; padding: 14px; font: 600 .88rem Montserrat, sans-serif; outline: none; }
+  input:focus { border-color: var(--orange); box-shadow: 0 0 0 3px rgba(255,101,0,.15); }
+  input[type=file] { padding: 12px; color: #a9a9a9; } input::file-selector-button { border: none; border-radius: 3px; background: #333; color: white; padding: 8px 10px; margin-right: 10px; font: 700 .68rem Montserrat, sans-serif; }
+  .form-actions { margin-top: 28px; display: flex; gap: 12px; flex-wrap: wrap; }
+  .side-logo { width: 100%; border-radius: 7px; display: block; border: 1px solid #444; }
+  .side h3 { margin: 25px 0 10px; text-transform: uppercase; font-size: .95rem; } .side p { color: var(--muted); font-size: .8rem; line-height: 1.6; }
+  .status { border-top: 1px solid #333; margin-top: 27px; padding-top: 22px; } .status strong { color: var(--gold); display: block; margin-bottom: 7px; } .status small { color: #aaa; line-height: 1.55; display: block; }
+  .cancel, .logout { background: transparent; color: #bbb; border: 0; padding: 0; margin-top: 17px; cursor: pointer; font: 700 .69rem Montserrat, sans-serif; text-decoration: underline; } .logout { margin: 0; text-transform: uppercase; }
+  @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } }
+</style>
+{% endblock %}
+{% block content %}
+<nav class="nav"><a class="brand" href="/creator"><i class="brand-dot"></i>Канал Бурмалды · Студия</a><div class="nav-links"><a href="/watch" target="_blank">Открыть эфир ↗</a><form action="/creator/logout" method="post"><button class="logout" type="submit">Выйти</button></form></div></nav>
+<main class="studio">
+  <div class="eyebrow">Панель создателя</div><h1>Запланируй<br><span>свой эфир.</span></h1>
+  <p class="lead">Загрузи ролик, выбери точную дату старта — зрители увидят фирменную заставку и обратный отсчёт. В нужную секунду видео станет доступно на странице эфира.</p>
+  <div class="grid">
+    <section class="card">
+      {% if request.args.get('saved') %}<div class="notice ok">Эфир опубликован. Страница зрителей уже обновлена.</div>{% endif %}
+      {% if request.args.get('cancelled') %}<div class="notice ok">Запланированный эфир отменён.</div>{% endif %}
+      {% if error %}<div class="notice error">{{ error }}</div>{% endif %}
+      <h2>Новый эфир</h2>
+      <form action="/creator/schedule" method="post" enctype="multipart/form-data">
+        <label for="title">Название</label><input id="title" name="title" maxlength="80" value="Эфир Канала Бурмалды" required>
+        <label for="video">Видео для эфира</label><input id="video" name="video" type="file" accept="video/mp4,video/webm,video/quicktime,video/x-m4v" required>
+        <label for="start_at">Дата и время начала</label><input id="start_at" name="start_at" type="datetime-local" required>
+        <div class="form-actions"><button class="button" type="submit">Опубликовать эфир</button><a class="button secondary" href="/watch" target="_blank">Страница зрителя</a></div>
+      </form>
+    </section>
+    <aside class="card side">
+      <img class="side-logo" src="{{ url_for('static', filename='burmaldy-logo.jpg') }}" alt="Логотип Канала Бурмалды">
+      {% if broadcast %}
+        <div class="status"><strong>● ЭФИР ЗАПЛАНИРОВАН</strong><small>{{ broadcast.title }}<br>Начало: {{ broadcast.startAt.replace('T', ' · ') }}</small>
+          <form action="/creator/cancel" method="post"><button class="cancel" type="submit">Отменить эфир</button></form></div>
+      {% else %}<h3>Готов к эфиру</h3><p>Пока нет опубликованной трансляции. Заполните форму — и зрительская страница сразу подготовится.</p>{% endif %}
+    </aside>
+  </div>
+</main>
+<script>
+  const input = document.getElementById('start_at');
+  const d = new Date(Date.now() + 10 * 60000); d.setSeconds(0,0); input.min = d.toISOString().slice(0,16);
+</script>
+{% endblock %}
